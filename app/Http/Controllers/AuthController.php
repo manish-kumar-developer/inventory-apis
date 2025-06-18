@@ -7,9 +7,32 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-
 class AuthController extends Controller
 {
+
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|confirmed|min:8',
+            'role' => 'in:manager,employee'
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role ?? 'employee'
+        ]);
+
+        return response()->json([
+            'message' => 'User registered successfully',
+            'token' => $user->createToken($request->email)->plainTextToken,
+            'user' => $user->only('id', 'name', 'email', 'role')
+        ], 201);
+    }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -26,14 +49,15 @@ class AuthController extends Controller
         }
 
         return response()->json([
+            'message' => 'Login successful',
             'token' => $user->createToken($request->email)->plainTextToken,
-            'role' => $user->role
+            'user' => $user->only('id', 'name', 'email', 'role')
         ]);
     }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out']);
+        return response()->json(['message' => 'Logged out successfully']);
     }
 }

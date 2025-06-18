@@ -10,9 +10,7 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
     
-    /**
-     * Register middleware directly in controller
-     */
+ 
     public function middleware($middleware, array $options = [])
     {
         foreach ((array) $middleware as $m) {

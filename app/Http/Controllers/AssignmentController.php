@@ -12,24 +12,33 @@ class AssignmentController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('role:manager');
+     
     }
 
-    public function assign(Request $request)
-    {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'user_id' => 'required|exists:users,id'
-        ]);
 
-        $product = Product::find($request->product_id);
-        $user = User::find($request->user_id);
+public function assign(Request $request, Product $product)
+{
 
-        if ($user->role !== 'employee') {
-            return response()->json(['message' => 'Can only assign to employees'], 400);
-        }
-
-        $product->update(['assigned_to' => $user->id]);
-        return response()->json(['message' => 'Product assigned successfully']);
+    if (Auth::user()->role !== 'manager') {
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
+
+    $request->validate([
+        'assigned_to' => 'required|exists:users,id'
+    ]);
+
+    
+    $user = User::find($request->assigned_to);
+    if ($user->role !== 'employee') {
+        return response()->json(['error' => 'Can only assign to employees'], 400);
+    }
+
+    $product->update(['assigned_to' => $request->assigned_to]);
+    
+    return response()->json([
+        'message' => 'Product assigned successfully',
+        'product' => $product,
+        'assigned_to' => $user->name
+    ]);
+}
 }
